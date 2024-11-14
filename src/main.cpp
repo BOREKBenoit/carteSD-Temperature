@@ -2,13 +2,15 @@
 
 #include <Arduino.h>
 #include <SD.h>
-#include <LiquidCrystal_I2C.h>
+#include <Wire.h>
+#include <rgb_lcd.h>
 #include <DHT.h>
+#include <Adafruit_Sensor.h>
 
 #define DHTPIN 7
 #define DHTTYPE DHT11
 DHT dht(DHTPIN, DHTTYPE);
-LiquidCrystal_I2C lcd(0x27, 16, 2);
+rgb_lcd lcd;
 
 #define sdCardPinChipSelect   53                          
 #define nomDuFichier "temp.xls"  
@@ -21,9 +23,8 @@ unsigned long interval = 10000;  // Intervalle de 10 secondes (10000 ms)
 float lastTemperature = 0.0;  // Variable pour stocker la dernière température mesurée
 
 void setup() {
+  lcd.begin(16, 2);
   dht.begin();
-  lcd.init();
-  lcd.backlight();
   lcd.clear();
 
   Serial.begin(9600);
@@ -34,6 +35,8 @@ void setup() {
   Serial.println(F("Étape 1 : Initialisation de la carte SD :"));
   if (!SD.begin(sdCardPinChipSelect)) {
     Serial.println(F("Échec de l'initialisation !"));
+    lcd.setCursor(0, 0);
+    lcd.print("Echec SD card");
     while (1);   
   }
   Serial.println(F("Initialisation terminée."));
@@ -100,7 +103,6 @@ void loop() {
     monFichier = SD.open(nomDuFichier, FILE_WRITE);
     if (monFichier) {
       monFichier.print(temp);  // Enregistrer la température
-      monFichier.print(" C");
       monFichier.println();  // Ajouter un retour à la ligne
       monFichier.close();    // Fermer le fichier
       Serial.print(F("Température enregistrée: "));
@@ -113,7 +115,6 @@ void loop() {
         monFichierH = SD.open(nomDuFichierH, FILE_WRITE);
     if (monFichierH) {
       monFichierH.print(hum);  // Enregistrer la température
-      monFichierH.print(" %");
       monFichierH.println();  // Ajouter un retour à la ligne
       monFichierH.close();    // Fermer le fichier
       Serial.print(F("Humidité enregistrée: "));
